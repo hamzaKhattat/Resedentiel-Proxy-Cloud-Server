@@ -1,0 +1,3 @@
+#!/bin/bash
+cd /home/hamza/Desktop/Resedentiel-Proxy-Cloud-Server
+sudo  go run server.go proxy.go web.go model.go model_client.go model_user.go

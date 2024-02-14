@@ -123,10 +123,10 @@ func main() {
 
 	middleServerId := flag.Int("id", 1, "middle server Id, e.g. 1,2,3...")
 	listenAddr := flag.String("listenAddr", "0.0.0.0:443", "listening address of the proxy server. e.g. <host>:<port>")
-	externalIP := flag.String("externalIP", "unknown", "external IP of the middle server to conenct to")
+	externalIP := flag.String("externalIP", "108.181.201.189", "external IP of the middle server to conenct to")
 	adminAddr := flag.String("adminAddr", "0.0.0.0:3333", "listening address for administration, e.g. <host>:<port>")
 	auth := flag.String("auth", "admin:J23490bSDJfkFH81u029d", "http auth, eg: david:hello-kitty")
-	dbConnectionString := flag.String("db", "pfcserver:hADHJf10inr10f1@tcp(192.168.56.20:8989)/pfconnect?parseTime=true", "MySQL database connection string")
+	dbConnectionString := flag.String("db", "pfcserver:hADHJf10inr10f1@tcp(127.0.0.1:3306)/pfconnect?parseTime=true", "MySQL database connection string")
 	flag.Parse()
 
 	middleId = *middleServerId
