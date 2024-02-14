@@ -107,7 +107,9 @@ sudo ufw allow 3306,80,443,4000:60000/tcp
 sudo ufw allow 3306,80,443,4000:60000/udp
 sudo go get github.com/hashicorp/yamux
 sudo go get github.com/gin-gonic/gin
-
+sudo cp run_server /bin
+echo "export PATH=$PATH:/bin/run_server">>~/.bashrc 
+source ~/bashrc
 sudo go get github.com/go-sql-driver/mysql
 sudo go get github.com/jmoiron/sqlx
 sudo apt install python3 python3-pip -y
