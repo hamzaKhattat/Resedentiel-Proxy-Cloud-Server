@@ -1,7 +1,5 @@
 package main
 
-// Middle server core functional
-
 import (
 	"encoding/binary"
 	"flag"
@@ -11,11 +9,21 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"socket/common"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
+)
+
+// Common data
+
+const (
+	// Maximal number of clients per middle server
+	MAX_CLIENTS_PER_MIDDLE_SERVER = 20000
+
+	// Handshake constants
+	CLNT_HS = "PFCCLHS"
+	MDDL_HS = "PFCMSHS"
 )
 
 // Port number mutex
@@ -118,7 +126,7 @@ func main() {
 	externalIP := flag.String("externalIP", "unknown", "external IP of the middle server to conenct to")
 	adminAddr := flag.String("adminAddr", "0.0.0.0:3333", "listening address for administration, e.g. <host>:<port>")
 	auth := flag.String("auth", "admin:J23490bSDJfkFH81u029d", "http auth, eg: david:hello-kitty")
-	dbConnectionString := flag.String("db", "pfcserver:hADHJf10inr10f1@tcp(127.0.0.1:3306)/pfconnect?parseTime=true", "MySQL database connection string")
+	dbConnectionString := flag.String("db", "pfcserver:hADHJf10inr10f1@tcp(192.168.56.20:8989)/pfconnect?parseTime=true", "MySQL database connection string")
 	flag.Parse()
 
 	middleId = *middleServerId
@@ -257,13 +265,13 @@ func handleClientConnection(conn net.Conn, session *yamux.Session, origConn net.
 
 	buffer = buffer[:n]
 
-	first := len(common.CLNT_HS)
+	first := len(CLNT_HS)
 	if len(buffer) < first {
 		log.Printf("connection error: wrong handshake: %s", string(buffer))
 		return
 	}
 	handshake := string(buffer[:first])
-	if handshake != common.CLNT_HS {
+	if handshake != CLNT_HS {
 		log.Printf("connection error: wrong handshake: %s", handshake)
 		return
 	}
@@ -275,8 +283,8 @@ func handleClientConnection(conn net.Conn, session *yamux.Session, origConn net.
 	log.Printf("[INCOMNING]: New connection: Client ID: %s", clientId)
 
 	count := getActiveClientsCount()
-	if count >= common.MAX_CLIENTS_PER_MIDDLE_SERVER {
-		log.Printf("[INCOMNING]: blocked: max clients number reached: %d", common.MAX_CLIENTS_PER_MIDDLE_SERVER)
+	if count >= MAX_CLIENTS_PER_MIDDLE_SERVER {
+		log.Printf("[INCOMNING]: blocked: max clients number reached: %d", MAX_CLIENTS_PER_MIDDLE_SERVER)
 		return
 	}
 
@@ -328,7 +336,7 @@ func handleClientConnection(conn net.Conn, session *yamux.Session, origConn net.
 	}
 
 	// Establish tunnel
-	conn.Write([]byte(common.MDDL_HS))
+	conn.Write([]byte(MDDL_HS))
 
 	clients.Store(port, client)
 	clientsMem.Store(conn.RemoteAddr().String(), port)
@@ -351,3 +359,4 @@ func handleClientConnection(conn net.Conn, session *yamux.Session, origConn net.
 	}
 	clients.Delete(port)
 }
+
