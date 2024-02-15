@@ -202,11 +202,15 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 		proxyAddress := "offline"
 		button := ""
 		elementId := "addr-" + row.Info.Id
+		country:="offline"
+		city:="offline"
 		if row.Client != nil {
 			class = "online"
 			externalIP = row.Client.ExternalIP
 			proxyAddress = s.ExternalIP + ":" + row.Client.Port
 			button = fmt.Sprintf(`<button class="btn btn-sm" data-clipboard-target="#%s">Copy</button>`, elementId)
+			country=locat_Country(externalIP)
+			city=locat_City(externalIP)
 		}
 
 		result += fmt.Sprintf(`
@@ -226,8 +230,8 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 			externalIP,
 			elementId, proxyAddress,
 			int64(row.Info.BytesUploaded/1024), int64(row.Info.BytesDownloaded/1024),
-			locat_Country(externalIP),
-			locat_City(externalIP))
+			country,
+			city)
 
 	}
 
