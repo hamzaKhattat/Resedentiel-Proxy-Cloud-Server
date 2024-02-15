@@ -7,11 +7,60 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"encoding/json"
 	"os"
 	"sort"
 	"strings"
 )
 
+type Location struct {
+	Country     string `json:"country"`
+	CountryCode string `json:"countryCode"`
+	City        string `json:"city"`
+	Region      string `json:"region"`
+}
+
+func locat_Country(ipAddress string) string {
+	// Specify the IP address for which you want to get the location information
+
+	// Make a GET request to the GeoIP API with the specified IP address
+	resp, err := http.Get("http://ip-api.com/json/" + ipAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	// Decode the JSON response into a Location struct
+	var location Location
+	if err := json.NewDecoder(resp.Body).Decode(&location); err != nil {
+		log.Fatal(err)
+	}
+
+	// Print the location information
+	return location.Country
+
+}
+
+func locat_City(ipAddress string) string {
+	// Specify the IP address for which you want to get the location information
+
+	// Make a GET request to the GeoIP API with the specified IP address
+	resp, err := http.Get("http://ip-api.com/json/" + ipAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	// Decode the JSON response into a Location struct
+	var location Location
+	if err := json.NewDecoder(resp.Body).Decode(&location); err != nil {
+		log.Fatal(err)
+	}
+
+	// Print the location information
+	return location.City
+
+}
 // Admin web server object
 type AdminServer struct {
 	ListenAddress string
@@ -125,6 +174,8 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 	<th>IP</th>
 	<th>Proxy IP</th>
 	<th>Transfer, Kb</th>
+	<th>Country</th>
+	<th>City</th>
 </tr>
 `
 	clientsById := make(map[string]*ProxyClient)
@@ -166,12 +217,17 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 		<span id="%s">%s</span>
 		`+button+`
 	</td>
+
 	<td>%d / %d</td>
+	<td>%s</td>
+	<td>%s</td>
 </tr>`, class,
 			row.Info.Id,
 			externalIP,
 			elementId, proxyAddress,
-			int64(row.Info.BytesUploaded/1024), int64(row.Info.BytesDownloaded/1024))
+			int64(row.Info.BytesUploaded/1024), int64(row.Info.BytesDownloaded/1024),
+			locat_Country(externalIP),
+			locat_City(externalIP))
 
 	}
 
