@@ -1,0 +1,153 @@
+#!/bin/bash
+
+sudo yum update && yum upgrade -y
+
+# Check if MySQL is installed
+
+if ! command -v mysql &> /dev/null; then
+
+    echo "MySQL is not installed. Installing..."
+
+    sudo yum install -y mysql-server
+
+    sudo systemctl start mysqld
+
+    sudo systemctl enable mysqld
+
+    sudo grep 'temporary password' /var/log/mysqld.log
+
+else
+
+    echo "MySQL is already installed."
+
+fi
+
+# Run MySQL commands to create schema and users
+
+mysql -u root -p << EOF
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'YourNewPassword';
+
+DROP DATABASE IF EXISTS pfconnect;
+
+CREATE DATABASE IF NOT EXISTS pfconnect DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+USE pfconnect;
+
+
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+
+SET AUTOCOMMIT = 0;
+
+START TRANSACTION;
+
+SET time_zone = "+00:00";
+
+
+
+CREATE TABLE proxy_users (
+
+  id bigint(20) NOT NULL,
+
+  login varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+
+  password varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+
+  PRIMARY KEY (id),
+
+  KEY login (login)
+
+);
+
+
+
+INSERT INTO proxy_users (id, login, password) VALUES
+
+(101, 'user1', '!123'),
+
+(102, 'user2', '!456');
+
+
+
+ALTER TABLE proxy_users
+
+  MODIFY id bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=201;
+
+
+
+CREATE TABLE proxy_clients (
+
+  id varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+
+  bytesUploaded bigint(20) NOT NULL,
+
+  bytesDownloaded bigint(20) NOT NULL,
+
+  PRIMARY KEY (id)
+
+);
+
+
+
+DROP USER IF EXISTS 'pfcserver'@'%';
+
+CREATE USER 'pfcserver'@'%' IDENTIFIED BY 'hADHJf10inr10f1';
+
+GRANT ALL ON pfconnect.* TO 'pfcserver'@'%';
+
+
+
+COMMIT;
+
+
+
+FLUSH PRIVILEGES;
+
+EOF
+
+sudo yum install ufw git -y
+
+sudo yum install epel-release -y
+
+sudo yum install snapd -y
+
+sudo systemctl enable --now snapd.socket
+
+sudo ln -s /var/lib/snapd/snap /snap
+
+sudo snap install go --classic
+
+sudo systemctl enable --now snapd.socket
+
+sudo firewall-cmd --permanent --zone=public --add-port=3306/tcp
+
+sudo firewall-cmd --permanent --zone=public --add-port=80/tcp
+
+sudo firewall-cmd --permanent --zone=public --add-port=443/tcp
+
+sudo firewall-cmd --permanent --zone=public --add-port=4000-60000/tcp
+
+sudo firewall-cmd --permanent --zone=public --add-port=4000-60000/udp
+
+sudo firewall-cmd --reload
+
+sudo go get github.com/hashicorp/yamux
+
+sudo go get github.com/gin-gonic/gin
+
+sudo cp run_server /bin
+
+echo "export PATH=$PATH:/bin/run_server" >> ~/.bashrc
+
+source ~/.bashrc
+
+sudo go get github.com/go-sql-driver/mysql
+
+sudo go get github.com/jmoiron/sqlx
+sudo go get github.com/hashicorp/yamuxgithub.com/hashicorp/yamux
+sudo go get github.com/gin-gonic/gin
+sudo yum install python3 python3-pip -y
+
+sudo go run server.go proxy.go web.go model.go model_client.go model_user.go
+
