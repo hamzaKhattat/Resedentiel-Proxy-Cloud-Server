@@ -1,5 +1,4 @@
 package main
-
 // Middle server admin page related functions
 
 import (
@@ -175,7 +174,6 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 	<th>Proxy IP</th>
 	<th>Transfer, Kb</th>
 	<th>Country</th>
-	<th>City</th>
 </tr>
 `
 	clientsById := make(map[string]*ProxyClient)
@@ -203,7 +201,7 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 		button := ""
 		elementId := "addr-" + row.Info.Id
 		country:="offline"
-		city:="offline"
+		city:=""
 		if row.Client != nil {
 			class = "online"
 			externalIP = row.Client.ExternalIP
@@ -223,15 +221,14 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 	</td>
 
 	<td>%d / %d</td>
-	<td>%s</td>
-	<td>%s</td>
+	<td>%s,%s</td>
+
 </tr>`, class,
 			row.Info.Id,
 			externalIP,
 			elementId, proxyAddress,
 			int64(row.Info.BytesUploaded/1024), int64(row.Info.BytesDownloaded/1024),
-			country,
-			city)
+			country,city)
 
 	}
 
