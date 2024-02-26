@@ -193,6 +193,7 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(rows, func(i, j int) bool {
 		return rows[i].Info.Id < rows[j].Info.Id
 	})
+	
 
 	for _, row := range rows {
 		class := "offline"
@@ -202,13 +203,20 @@ func (s *AdminServer) getProxyServers(w http.ResponseWriter, r *http.Request) {
 		elementId := "addr-" + row.Info.Id
 		country:="offline"
 		city:=""
+		user:=""
+		pass:=""
 		if row.Client != nil {
 			class = "online"
 			externalIP = row.Client.ExternalIP
-			proxyAddress = s.ExternalIP + ":" + row.Client.Port
+			users,er:=g_Model.GetUsersByip(externalIP)
+			if er!=nil{fmt.Println(er)}
+		       user=users.Username
+			pass=users.Password
+			proxyAddress = user+":"+pass+"@" + s.ExternalIP + ":" + row.Client.Port
 			button = fmt.Sprintf(`<button class="btn btn-sm" data-clipboard-target="#%s">Copy</button>`, elementId)
 			country=locat_Country(externalIP)
 			city=locat_City(externalIP)
+			
 		}
 
 		result += fmt.Sprintf(`

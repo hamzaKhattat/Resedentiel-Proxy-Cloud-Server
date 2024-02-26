@@ -82,7 +82,7 @@ func (m *Model) startInfoDumper() {
 			// Iterate active clients
 			clients.Range(func(k, v interface{}) bool {
 				pc := v.(*ProxyClient)
-				log.Printf("[DUMPER]: saving info of client: %s...", pc.Id)
+				log.Printf("[DUMPER]: saving info of client: %s...", pc.ExternalIP)
 				err := pc.saveInfo()
 				if err != nil {
 					log.Printf("[DUMPER]: info saving error: %v", err)

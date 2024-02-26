@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"encoding/binary"
 	"flag"
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"math/rand"
+	"strings"
 )
 
 // Common data
@@ -89,13 +92,74 @@ func (pc *ProxyClient) Init() error {
 	return nil
 }
 
+var (
+	lowerCharSet   = "abcdedfghijklmnopqrst"
+	upperCharSet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	specialCharSet = "!#$%&*"
+	numberSet      = "0123456789"
+	allCharSet     = lowerCharSet + upperCharSet + specialCharSet + numberSet
+)
+
+func password() string {
+
+	rand.Seed(time.Now().Unix())
+
+	minSpecialChar := 1
+	minNum := 1
+	minUpperCase := 2
+	passwordLength := 10
+	password := generatePassword(passwordLength, minSpecialChar, minNum, minUpperCase)
+	return password
+}
+
+func generatePassword(passwordLength, minSpecialChar, minNum, minUpperCase int) string {
+	var password strings.Builder
+
+	//Set special character
+	for i := 0; i < minSpecialChar; i++ {
+		random := rand.Intn(len(specialCharSet))
+		password.WriteString(string(specialCharSet[random]))
+	}
+
+	//Set numeric
+	for i := 0; i < minNum; i++ {
+		random := rand.Intn(len(numberSet))
+		password.WriteString(string(numberSet[random]))
+	}
+
+	//Set uppercase
+	for i := 0; i < minUpperCase; i++ {
+		random := rand.Intn(len(upperCharSet))
+		password.WriteString(string(upperCharSet[random]))
+	}
+
+	remainingLength := passwordLength - minSpecialChar - minNum - minUpperCase
+	for i := 0; i < remainingLength; i++ {
+		random := rand.Intn(len(allCharSet))
+		password.WriteString(string(allCharSet[random]))
+	}
+	inRune := []rune(password.String())
+	rand.Shuffle(len(inRune), func(i, j int) {
+		inRune[i], inRune[j] = inRune[j], inRune[i]
+	})
+	return string(inRune)
+}
+
 func (pc *ProxyClient) saveInfo() error {
+
+	password := password()
 	return g_Model.SetProxyClientInfo(&ProxyClientInfo{
 		Id:              pc.Id,
+		Pcip:            pc.ExternalIP,
+		Port:            pc.Port,
+		Serverip:        "108.181.201.189",
+		Username:        fmt.Sprintf("user%d", rand.Int63n(1000000)),
+		Password:        password,
 		BytesDownloaded: atomic.LoadInt64(&pc.BytesRead),
 		BytesUploaded:   atomic.LoadInt64(&pc.BytesWritten),
 	})
 }
+
 
 func (pc *ProxyClient) AddRead(n int) {
 	atomic.AddInt64(&pc.BytesRead, int64(n))
