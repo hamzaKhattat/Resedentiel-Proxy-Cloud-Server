@@ -40,27 +40,53 @@ func decodeCreds(auth string) (user, pass string, ok bool) {
 	return auth[:colon], auth[colon+1:], true
 }
 
-// Authenticate proxy user
-func (c *RequestContext) Authenticate() bool {
-	authHeaders := c.R.Header["Proxy-Authorization"]
-	for _, auth := range authHeaders {
-		login, pass, ok := decodeCreds(strings.TrimPrefix(auth, "Basic "))
-		if ok {
-			user, err := g_Model.Auth(login, pass)
-			if err == nil {
-				c.User = user
-				return false
-			}
-			log.Printf("Bad auth: (%s/%s): %v", login, pass, err)
-			c.send407()
-			return true
-		}
-	}
-	log.Printf("No auth provided")
-	c.send407()
-	return true
-}
 
+
+
+
+// Authenticate proxy user
+func (c *RequestContext) Authenticate(ip string) bool {
+        authHeaders := c.R.Header["Proxy-Authorization"]
+        for _, auth := range authHeaders {
+
+                login, pass, ok := decodeCreds(strings.TrimPrefix(auth, "Basic "))	
+		//fmt.Printf("Before okk .. testing %s:%s for %s...\n",login,pass,ip)
+                if ok {
+                        user,err:= g_Model.GetUsersByip(ip)
+                        if err!=nil{
+                     fmt.Println("Error Getting infos from ip in proxy.go .",err)					
+				c.send407()
+				return true
+                        }
+                       // fmt.Println("Trying Authenticate with ",login,pass)
+                        if login==user.Username{
+                             //   fmt.Println("Testing Authenticate with ",login)
+                                if pass==user.Password{
+                                        fmt.Println("Correct!!!!!!!!!!!!")
+					c.User=user
+                                        return false
+                                }else{
+									fmt.Println("Invalid Password !!!!!!!!!!!")
+									c.send407()
+									return true
+                                }
+                        }else{
+							log.Printf("Bad auth: (%s/%s): %v", login, pass, err)
+							c.send407()
+							return true
+                }
+//                      user, err := g_Model.Auth(ip,login, pass)
+//                      if err == nil {
+//                              c.User = user
+//                              return false
+//                      }
+                        
+        }}
+        log.Printf("No auth provided")
+        c.send407()
+        return true
+
+	}
 // HTTP proxy handler object
 type HTTPProxyHandler struct {
 	Client *ProxyClient  // keeps related active client in context
@@ -109,13 +135,13 @@ func (h *HTTPProxyHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	}
 
 	//log.Printf("ServeHTTP: R: %+v", *req)
-
-	if c.Authenticate() {
+	fmt.Println("Trying to Authenticate for ",h.Client.ExternalIP)
+	if c.Authenticate(h.Client.ExternalIP) {
 		log.Printf("Authentication failed")
 		return
 	}
 
-	log.Printf("Authenticated as: %s", c.User.Login)
+	log.Printf("Authenticated as: %s", c.User.Username)
 
 	// Handle HTTP CONNECT method
 	if c.R.Method == "CONNECT" {
@@ -126,6 +152,8 @@ func (h *HTTPProxyHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) 
 	// Handle other HTTP methods
 
 	log.Printf("HTTP %s: to: %s ...", c.R.Method, c.R.Host)
+
+	log.Println("Incomming header:",c.R.Header)
 
 	dialer := ClientDialer{
 		Client: h.Client,
@@ -257,6 +285,7 @@ func (c *RequestContext) handleTnnl() {
 	host := c.R.URL.Host
 
 	log.Printf("HTTP CONNECT: to: %s ...", host)
+	log.Println("Incomming header:",c.R.Header["Host"])
 
 	clientConn, err := newhjkCnn(c.W)
 	if err != nil {
@@ -290,7 +319,7 @@ type RequestContext struct {
 	R         *http.Request
 	W         http.ResponseWriter
 	Resp      *http.Response
-	User      *User
+	User      usersbyip
 }
 
 // Connection that has been hijacked (to fulfill a CONNECT request)

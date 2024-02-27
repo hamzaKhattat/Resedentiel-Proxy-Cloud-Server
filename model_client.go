@@ -23,6 +23,7 @@ type ProxyClientInfo struct {
 	BytesDownloaded int64 `db:"bytesDownloaded"`
 }
 type usersbyip struct{
+	Id		string
 	Username	string	
 	Password	string	
 }
@@ -62,11 +63,11 @@ UPDATE bytesDownloaded = :bytesDownloaded, bytesUploaded = :bytesUploaded , pcip
 	if err != nil {
 		return fmt.Errorf("Upsert error: %w", err)
 	}  
-	fmt.Println("Saving info client in DB ...............")
+	/*fmt.Println("Saving info client in DB ...............")
 	us,errr:=m.GetUsersByip(info.Pcip)
 	if(errr!=nil){fmt.Println("Fuck off...")}
 	fmt.Println(us)
-	fmt.Println("User:",us.Username,"Pass:",us.Password)
+	fmt.Println("User:",us.Username,"Pass:",us.Password)*/
 	return nil
 }
 
@@ -82,7 +83,7 @@ func (m *Model) GetProxyClientsInfo() ([]*ProxyClientInfo, error) {
 //Return info from ip
 func (m *Model) GetUsersByip(ip string) (usersbyip, error) {
     var user usersbyip
-    err := m.DB.QueryRow(fmt.Sprintf("SELECT username, password FROM proxy_clients WHERE pcip='%s'", ip)).Scan(&user.Username, &user.Password)
+    err := m.DB.QueryRow(fmt.Sprintf("SELECT id,username, password FROM proxy_clients WHERE pcip='%s'", ip)).Scan(&user.Id,&user.Username, &user.Password)
     if err != nil {
         log.Printf("Error while getting info from IP %s: %s", ip, err)
         return usersbyip{}, err
