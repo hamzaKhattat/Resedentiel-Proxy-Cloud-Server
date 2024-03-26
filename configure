@@ -70,32 +70,15 @@ ALTER TABLE proxy_users
   MODIFY id bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=201;
 
 
-
-CREATE TABLE proxy_clients (
-
-  id varchar(32) COLLATE utf8_unicode_ci NOT NULL,
-
-  bytesUploaded bigint(20) NOT NULL,
-
-  bytesDownloaded bigint(20) NOT NULL,
-
-  PRIMARY KEY (id)
-
-);
-
-
-
-DROP USER IF EXISTS 'pfcserver'@'%';
-
-CREATE USER 'pfcserver'@'%' IDENTIFIED BY 'hADHJf10inr10f1';
-
-GRANT ALL ON pfconnect.* TO 'pfcserver'@'%';
-
-
-
-COMMIT;
-
-
+CREATE TABLE `proxy_clients` (
+  `id` varchar(32) NOT NULL PRIMARY KEY,
+  `pcip` VARCHAR(255), DROP USER IF EXISTS 'pfcserver'@'%';
+  `port` VARCHAR(255), CREATE USER 'pfcserver'@'%' IDENTIFIED BY 'hADHJf10inr10f1';
+  `serverip` VARCHAR(255), GRANT ALL ON pfconnect.* TO 'pfcserver'@'%';
+  `username` VARCHAR(255),
+  `password` VARCHAR(255),
+  `bytesUploaded` BIGINT(20) NOT NULL, COMMIT;
+  `bytesDownloaded` BIGINT(20) NOT NULL ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 FLUSH PRIVILEGES;
 
